@@ -50,6 +50,24 @@ impl Toml {
     }
 }
 
+impl Toml {
+    pub fn add_dependency(&mut self, dependency: &str) {
+        self.project.dependencies.push(dependency.to_string());
+    }
+
+    pub fn add_optional_dependency(&mut self, dependency: &str) {
+        match &mut self.project.optional_dependencies {
+            Some(deps) => {
+                deps.push(dependency.to_string());
+            }
+            None => {
+                self.project.optional_dependencies =
+                    Some(vec![dependency.to_string()]);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -97,6 +115,35 @@ build-backend = "huak.core.build.api"
         let toml = Toml::from(string).unwrap();
 
         assert_eq!(toml.project.name, "Test");
-        assert_eq!(toml.project.authors[0].clone().name.unwrap(), "Chris Pryer")
+        assert_eq!(
+            toml.project.authors[0].clone().name.unwrap(),
+            "Chris Pryer"
+        );
+    }
+
+    #[test]
+    fn deserialize_array_of_authors() {
+        let string = r#"[project]
+name = "Test"
+version = "0.1.0"
+description = ""
+dependencies = ["click==8.1.3", "black==22.8.0"]
+
+[[project.authors]]
+name = "Chris Pryer"
+email = "cnpryer@gmail.com"
+
+[[project.authors]]
+name = "Troy Kohler"
+email = "test@email.com"
+
+[build-system]
+requires = ["huak-core>=1.0.0"]
+build-backend = "huak.core.build.api"
+"#;
+
+        let toml = Toml::from(string).unwrap();
+
+        assert!(toml.project.authors.iter().nth(1).is_some());
     }
 }
